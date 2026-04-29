@@ -61,9 +61,12 @@ def run_pyinstaller() -> None:
 
 def run_inno_setup() -> None:
     print("[3/4] Buscando Inno Setup...")
+    import os
+    local_programs = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Inno Setup 6" / "ISCC.exe"
     iscc_candidates = [
         Path("C:/Program Files (x86)/Inno Setup 6/ISCC.exe"),
         Path("C:/Program Files/Inno Setup 6/ISCC.exe"),
+        local_programs,
         shutil.which("ISCC"),
     ]
     iscc = next((p for p in iscc_candidates if p and Path(p).exists()), None)

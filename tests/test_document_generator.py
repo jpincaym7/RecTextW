@@ -37,16 +37,9 @@ def test_generate_transcription_txt(tmp_path):
     assert "Hola mundo" in content
 
 
-def test_generate_transcription_docx(tmp_path):
+def test_generate_complete_docx(tmp_path):
     gen = DocumentGenerator()
     tr = _make_transcription()
-    path = tmp_path / "transcripcion.docx"
-    gen.generate_transcription_docx(tr, path)
-    assert path.exists() and path.stat().st_size > 0
-
-
-def test_generate_guion_base_docx(tmp_path):
-    gen = DocumentGenerator()
     guion = GuionData(
         titulo="Tutorial de prueba",
         funcionalidad="Módulo de reportes",
@@ -56,8 +49,8 @@ def test_generate_guion_base_docx(tmp_path):
         cierre="Así se genera un reporte.",
         resumen="Tutorial sobre el módulo de reportes del sistema.",
     )
-    path = tmp_path / "guion_base.docx"
-    gen.generate_guion_base_docx(guion, path)
+    path = tmp_path / "informe_completo.docx"
+    gen.generate_complete_docx(tr, guion, path)
     assert path.exists() and path.stat().st_size > 0
 
 

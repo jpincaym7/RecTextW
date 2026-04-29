@@ -235,10 +235,13 @@ class Pipeline:
             start = raw.find("{")
             end = raw.rfind("}") + 1
             data = json.loads(raw[start:end])
+            kw = data.get("palabras_clave", [])
+            if isinstance(kw, str):
+                kw = [w.strip() for w in kw.split(",") if w.strip()]
             return (
                 data.get("titulo", "Sin título"),
                 data.get("funcionalidad", ""),
-                data.get("palabras_clave", []),
+                kw,
             )
         except Exception:
             return "Sin título", "", []

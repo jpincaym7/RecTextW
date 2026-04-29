@@ -5,6 +5,7 @@ de exactamente 3 a 4 líneas. El resumen debe:
 - Ser redactado en tercera persona, tono profesional y técnico
 - No incluir frases introductorias como "Este video explica..." sino ir directo al contenido
 - Usar vocabulario preciso del dominio de sistemas de información
+- Cuando el proceso involucre asignar entidades (personas, roles, materias, cargos), usar "designar" o "designación" en lugar de "asignar" o "asignación"
 
 Transcripción:
 {transcription}

@@ -125,6 +125,10 @@ class HomeView(QWidget):
         open_folder_btn.clicked.connect(self._open_output_folder)
         header.addWidget(open_folder_btn)
 
+        open_report_btn = IconButton("file_doc", "  Abrir informe", "primary")
+        open_report_btn.clicked.connect(self._open_complete_report)
+        header.addWidget(open_report_btn)
+
         new_btn = IconButton("nav_home", "  Nuevo procesamiento", "secondary")
         new_btn.clicked.connect(lambda: self._stack.setCurrentIndex(0))
         header.addWidget(new_btn)
@@ -143,19 +147,19 @@ class HomeView(QWidget):
         self._tabs = QTabWidget()
         self._tabs.setDocumentMode(True)
 
-        for tab_name, attr, docx in [
-            ("Transcripción", "_tab_transcription", "transcripcion.docx"),
-            ("Resumen",       "_tab_summary",       "resumen.docx"),
-            ("Guión Base",    "_tab_script",        "guion_base.docx"),
+        for tab_name, attr in [
+            ("Transcripción", "_tab_transcription"),
+            ("Resumen",       "_tab_summary"),
+            ("Guión Base",    "_tab_script"),
         ]:
-            tab = self._make_text_tab(docx)
+            tab = self._make_text_tab()
             setattr(self, attr, tab)
             self._tabs.addTab(tab, tab_name)
 
         layout.addWidget(self._tabs)
         return w
 
-    def _make_text_tab(self, docx_name: str = "") -> QWidget:
+    def _make_text_tab(self) -> QWidget:
         w = QWidget()
         layout = QVBoxLayout(w)
         layout.setContentsMargins(0, SPACE_SM, 0, 0)
@@ -165,12 +169,6 @@ class HomeView(QWidget):
         layout.addWidget(text_edit)
 
         btn_row = QHBoxLayout()
-
-        if docx_name:
-            open_btn = IconButton("file_doc", "  Abrir DOCX", "ghost")
-            open_btn.clicked.connect(lambda _=False, d=docx_name: self._open_docx(d))
-            btn_row.addWidget(open_btn)
-
         btn_row.addStretch()
         copy_btn = IconButton("action_copy", "  Copiar", "ghost")
         copy_btn.clicked.connect(lambda: self._copy_text(text_edit))
@@ -248,14 +246,14 @@ class HomeView(QWidget):
         if self._output_dir and self._output_dir.exists():
             os.startfile(str(self._output_dir))
 
-    def _open_docx(self, filename: str) -> None:
+    def _open_complete_report(self) -> None:
         if not self._output_dir:
             return
-        path = self._output_dir / filename
+        path = self._output_dir / "informe_completo.docx"
         if path.exists():
             os.startfile(str(path))
         else:
-            ToastManager.instance().error(f"No se encontró el archivo: {filename}")
+            ToastManager.instance().error("No se encontró el informe completo")
 
     def _copy_text(self, text_edit: QPlainTextEdit) -> None:
         QApplication.clipboard().setText(text_edit.toPlainText())

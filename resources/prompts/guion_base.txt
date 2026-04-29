@@ -5,6 +5,7 @@ base para que un equipo UX/UI redacte un guión profesional. Aplica estas reglas
 - Elimina muletillas, repeticiones y frases incompletas
 - Identifica y numera los pasos del proceso explicado
 - Corrige incoherencias manteniendo el significado original
+- Cuando el proceso involucre asignar entidades (personas, roles, materias, cargos), usar "designar" o "designación" en lugar de "asignar" o "asignación"
 - Usa tono profesional pero cercano, en segunda persona (tú/usted)
 - No inventes pasos que no estén en la transcripción
 

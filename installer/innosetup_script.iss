@@ -1,4 +1,6 @@
 [Setup]
+; Resolver rutas relativas desde la raíz del proyecto, no desde installer/
+SourceDir=..\
 AppName=InnoTech VideoTutor
 AppVersion=1.0.0
 AppPublisher=InnoTech Solutions
@@ -23,14 +25,18 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 ; Aplicación principal (salida de PyInstaller)
 Source: "dist\InnoTech VideoTutor\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
-; Visual C++ Redistributable
-Source: "installer\prereqs\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+; FFmpeg portable (queda junto al .exe → coincide con FFMPEG_BUNDLED_DIR)
+Source: "tools\ffmpeg\bin\*"; DestDir: "{app}\ffmpeg\bin"; Flags: ignoreversion recursesubdirs
+
+; Visual C++ Redistributable (opcional: si no existe, se omite — el build no falla)
+Source: "installer\prereqs\vc_redist.x64.exe"; DestDir: "{tmp}"; \
+  Flags: deleteafterinstall skipifsourcedoesntexist
 
 [Run]
-; Instalar VC++ Redist silenciosamente si no está presente
+; Instalar VC++ Redist silenciosamente si no está presente y el archivo está bundleado
 Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/quiet /norestart"; \
   StatusMsg: "Instalando componentes de Visual C++..."; \
-  Flags: runhidden; Check: VCRedistNeedsInstall
+  Flags: runhidden skipifdoesntexist; Check: VCRedistNeedsInstall
 
 ; Lanzar la aplicación al finalizar
 Filename: "{app}\InnoTech VideoTutor.exe"; Description: "Iniciar InnoTech VideoTutor"; \
