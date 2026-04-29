@@ -2,7 +2,6 @@
 import base64
 import json
 import platform
-import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -11,6 +10,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 
 from app.utils.logger import get_logger
+from app.utils.subprocess_helper import run_hidden
 
 logger = get_logger()
 
@@ -79,7 +79,7 @@ class SecretsManager:
     def _get_hardware_id(self) -> str:
         """Obtiene un identificador único del equipo."""
         try:
-            result = subprocess.run(
+            result = run_hidden(
                 ["wmic", "diskdrive", "get", "serialnumber"],
                 capture_output=True,
                 text=True,

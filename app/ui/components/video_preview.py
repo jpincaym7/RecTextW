@@ -34,7 +34,7 @@ class _ThumbWorker(QThread):
     def run(self) -> None:
         try:
             from app.utils.ffmpeg_check import find_ffmpeg
-            import subprocess
+            from app.utils.subprocess_helper import run_hidden
             ffmpeg = find_ffmpeg()
             if not ffmpeg:
                 self.failed.emit(); return
@@ -50,7 +50,7 @@ class _ThumbWorker(QThread):
                        "-vf", f"scale={_THUMB_W}:-1",
                        "-y", str(self._thumb)]
 
-            subprocess.run(cmd, capture_output=True, timeout=15)
+            run_hidden(cmd, capture_output=True, timeout=15)
 
             if self._thumb.exists() and self._thumb.stat().st_size > 0:
                 self.done.emit(str(self._thumb))

@@ -2,13 +2,13 @@
 ; Resolver rutas relativas desde la raíz del proyecto, no desde installer/
 SourceDir=..\
 AppName=InnoTech VideoTutor
-AppVersion=1.0.0
+AppVersion=1.0.1
 AppPublisher=InnoTech Solutions
 AppPublisherURL=https://www.innotech.com
 DefaultDirName={autopf}\InnoTech\VideoTutor
 DefaultGroupName=InnoTech VideoTutor
 OutputDir=dist\installer
-OutputBaseFilename=InnoTech_VideoTutor_Setup_v1.0.0
+OutputBaseFilename=InnoTech_VideoTutor_Setup_v1.0.1
 SetupIconFile=resources\icons\app_logo.ico
 Compression=lzma2/ultra64
 SolidCompression=yes

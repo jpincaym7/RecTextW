@@ -7,20 +7,26 @@ import os
 import sys
 
 APP_NAME    = "InnoTech VideoTutor"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 APP_AUTHOR  = "InnoTech Solutions"
 
-# Rutas base
+# Rutas base.
+# BASE_DIR     = directorio del .exe (o raíz del proyecto en dev). Se usa para
+#                recursos adyacentes al ejecutable: FFmpeg que instala Inno Setup.
+# RESOURCES_BASE = donde PyInstaller bundlea los datos Python. En --onedir es
+#                  <exe>/_internal/ (sys._MEIPASS); en dev coincide con BASE_DIR.
 if getattr(sys, 'frozen', False):
     BASE_DIR = Path(sys.executable).parent
+    RESOURCES_BASE = Path(getattr(sys, '_MEIPASS', BASE_DIR))
 else:
     BASE_DIR = Path(__file__).parent.parent
+    RESOURCES_BASE = BASE_DIR
 
-RESOURCES_DIR  = BASE_DIR / "resources"
+RESOURCES_DIR  = RESOURCES_BASE / "resources"
 ICONS_DIR      = RESOURCES_DIR / "icons"
 FONTS_DIR      = RESOURCES_DIR / "fonts"
 PROMPTS_DIR    = RESOURCES_DIR / "prompts"
-STYLES_PATH    = BASE_DIR / "app" / "ui" / "styles.qss"
+STYLES_PATH    = RESOURCES_BASE / "app" / "ui" / "styles.qss"
 
 # Datos de usuario (persistentes entre sesiones)
 DATA_DIR    = Path(os.environ.get("APPDATA", Path.home())) / "InnoTech" / "VideoTutor"

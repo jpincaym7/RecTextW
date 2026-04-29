@@ -1,5 +1,19 @@
 """Punto de entrada de InnoTech VideoTutor."""
+import os
 import sys
+from pathlib import Path
+
+# Frozen --windowed (console=False) deja sys.stdout/stderr en None. Cualquier
+# librería que escriba ahí (tqdm de Whisper, prints de torch, etc.) crashea
+# con AttributeError. Redirigir a archivos de log antes de cualquier import
+# pesado evita el crash y nos deja diagnóstico.
+if getattr(sys, 'frozen', False):
+    _log_dir = Path(os.environ.get("APPDATA", Path.home())) / "InnoTech" / "VideoTutor" / "logs"
+    _log_dir.mkdir(parents=True, exist_ok=True)
+    if sys.stdout is None:
+        sys.stdout = open(_log_dir / "stdout.log", "a", encoding="utf-8", buffering=1)
+    if sys.stderr is None:
+        sys.stderr = open(_log_dir / "stderr.log", "a", encoding="utf-8", buffering=1)
 
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon

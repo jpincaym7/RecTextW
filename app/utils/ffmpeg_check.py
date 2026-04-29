@@ -1,11 +1,11 @@
 """Detección, validación y descarga automática de FFmpeg."""
 import shutil
-import subprocess
 import zipfile
 from pathlib import Path
 from typing import Callable
 
 from app.utils.logger import get_logger
+from app.utils.subprocess_helper import run_hidden
 
 logger = get_logger()
 
@@ -46,7 +46,7 @@ def find_ffprobe() -> Path | None:
 def validate_ffmpeg(path: Path) -> bool:
     """Ejecuta ffmpeg -version y verifica que responde correctamente."""
     try:
-        result = subprocess.run(
+        result = run_hidden(
             [str(path), "-version"],
             capture_output=True,
             text=True,

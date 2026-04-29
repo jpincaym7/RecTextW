@@ -67,7 +67,12 @@ class MainWindow(QMainWindow):
         try:
             if STYLES_PATH.exists():
                 from PyQt6.QtWidgets import QApplication
-                QApplication.instance().setStyleSheet(STYLES_PATH.read_text(encoding="utf-8"))
+                from app.config import RESOURCES_DIR
+                qss = STYLES_PATH.read_text(encoding="utf-8")
+                # Las url() relativas del QSS se resuelven contra el CWD; en
+                # frozen no apunta a los recursos. Reescribir a path absoluto.
+                qss = qss.replace("url(resources/", f"url({RESOURCES_DIR.as_posix()}/")
+                QApplication.instance().setStyleSheet(qss)
         except Exception as exc:
             logger.warning("No se pudo cargar el QSS: %s", exc)
 

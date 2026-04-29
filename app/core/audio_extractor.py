@@ -10,6 +10,7 @@ from typing import Callable
 from app.config import AUDIO_CODEC, AUDIO_SAMPLE_RATE, AUDIO_CHANNELS
 from app.utils.ffmpeg_check import find_ffmpeg, find_ffprobe, validate_ffmpeg
 from app.utils.logger import get_logger
+from app.utils.subprocess_helper import run_hidden, popen_hidden
 
 logger = get_logger()
 
@@ -68,7 +69,7 @@ class AudioExtractor:
             str(video_path),
         ]
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = run_hidden(cmd, capture_output=True, text=True, timeout=30)
             data = json.loads(result.stdout)
         except Exception as exc:
             raise AudioExtractionError(f"Error obteniendo metadatos del video: {exc}") from exc
@@ -124,7 +125,7 @@ class AudioExtractor:
         ]
 
         try:
-            process = subprocess.Popen(
+            process = popen_hidden(
                 cmd,
                 stderr=subprocess.PIPE,
                 stdout=subprocess.DEVNULL,
