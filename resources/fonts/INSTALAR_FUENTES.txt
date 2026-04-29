@@ -1,0 +1,17 @@
+FUENTES INTER — INSTRUCCIONES DE INSTALACIÓN
+============================================
+
+La fuente Inter debe descargarse manualmente desde:
+https://fonts.google.com/specimen/Inter
+
+Archivos necesarios (colocar en esta misma carpeta):
+  - Inter-Regular.ttf    (peso 400)
+  - Inter-Medium.ttf     (peso 500)
+  - Inter-SemiBold.ttf   (peso 600)
+
+Alternativa rápida con pip:
+  pip install fonttools
+  # Luego descargar desde https://github.com/rsms/inter/releases
+
+Si los archivos TTF no están presentes, la aplicación usará
+"Segoe UI" como fuente fallback (nativa de Windows).
