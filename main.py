@@ -15,9 +15,22 @@ if getattr(sys, 'frozen', False):
     if sys.stderr is None:
         sys.stderr = open(_log_dir / "stderr.log", "a", encoding="utf-8", buffering=1)
 
+    # Whisper, PyTorch y numba/llvmlite lanzan subprocesos internos sin
+    # CREATE_NO_WINDOW, lo que provoca ventanas de consola visibles. Este patch
+    # intercepta TODOS los subprocesos lanzados por cualquier librería.
+    if sys.platform == "win32":
+        import subprocess as _sp
+        _CREATE_NO_WINDOW = 0x08000000
+        _orig_popen_init = _sp.Popen.__init__
+        def _popen_no_window(self, *args, **kwargs):
+            if sys.platform == "win32":
+                flags = kwargs.get("creationflags", 0)
+                kwargs["creationflags"] = flags | _CREATE_NO_WINDOW
+            _orig_popen_init(self, *args, **kwargs)
+        _sp.Popen.__init__ = _popen_no_window
+
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import Qt
 
 from app.config import APP_NAME, ICONS_DIR
 from app.utils.logger import setup_logger

@@ -65,10 +65,9 @@ for _ffmpeg_dir in (FFMPEG_BUNDLED_DIR, FFMPEG_LOCAL_DIR, FFMPEG_DIR):
         break
 
 # Configuración de Whisper
-WHISPER_MODEL     = "medium"
-WHISPER_LANGUAGE  = "es"
-WHISPER_DEVICE    = "auto"
-WHISPER_BEAM_SIZE = 5
+WHISPER_MODEL    = "medium"
+WHISPER_LANGUAGE = "es"
+WHISPER_DEVICE   = "auto"
 
 # Parámetros de extracción de audio (óptimos para Whisper)
 AUDIO_SAMPLE_RATE  = 16000

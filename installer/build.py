@@ -6,12 +6,14 @@ Pasos:
   3. Ejecuta Inno Setup compiler (ISCC.exe) si está disponible
   4. Reporta tamaño final del instalador
 """
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
+SEP = ";" if sys.platform == "win32" else ":"
 
 
 def clean() -> None:
@@ -30,20 +32,35 @@ def run_pyinstaller() -> None:
         "--windowed",
         "--onedir",
         "--noconfirm",
-        "--add-data", f"{ROOT / 'resources'};resources",
+        # Datos no-Python que deben quedar en _internal/
+        "--add-data", f"{ROOT / 'resources'}{SEP}resources",
+        "--add-data", f"{ROOT / 'app' / 'ui' / 'styles.qss'}{SEP}app/ui",
+        # Imports ocultos (detectados en runtime, PyInstaller no los rastrea)
         "--hidden-import", "whisper",
         "--hidden-import", "torch",
         "--hidden-import", "torchaudio",
+        "--hidden-import", "numba",
+        "--hidden-import", "llvmlite",
         "--hidden-import", "google.generativeai",
         "--hidden-import", "groq",
         "--hidden-import", "openai",
         "--hidden-import", "cryptography",
         "--hidden-import", "keyring.backends.Windows",
+        "--hidden-import", "tiktoken_ext.openai_public",
+        "--hidden-import", "tiktoken_ext",
+        "--hidden-import", "pkg_resources.py2_warn",
+        # Paquetes con extensiones nativas o assets de datos
         "--collect-all", "whisper",
         "--collect-all", "torch",
+        "--collect-all", "torchaudio",
+        "--collect-all", "numba",
+        "--collect-all", "llvmlite",
+        # Excluir módulos pesados innecesarios
         "--exclude-module", "matplotlib",
         "--exclude-module", "scipy",
         "--exclude-module", "PIL",
+        "--exclude-module", "IPython",
+        "--exclude-module", "jupyter",
         str(ROOT / "main.py"),
     ]
 
@@ -61,7 +78,6 @@ def run_pyinstaller() -> None:
 
 def run_inno_setup() -> None:
     print("[3/4] Buscando Inno Setup...")
-    import os
     local_programs = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Inno Setup 6" / "ISCC.exe"
     iscc_candidates = [
         Path("C:/Program Files (x86)/Inno Setup 6/ISCC.exe"),
@@ -72,8 +88,9 @@ def run_inno_setup() -> None:
     iscc = next((p for p in iscc_candidates if p and Path(p).exists()), None)
 
     if iscc is None:
-        print("  AVISO: Inno Setup no encontrado. Instálalo desde https://jrsoftware.org/isinfo.php")
-        print("  El build de PyInstaller está en dist/InnoTech VideoTutor/")
+        print("  AVISO: Inno Setup no encontrado.")
+        print("  Descárgalo gratis desde: https://jrsoftware.org/isinfo.php")
+        print("  El build de PyInstaller está listo en: dist/InnoTech VideoTutor/")
         return
 
     iss_path = ROOT / "installer" / "innosetup_script.iss"

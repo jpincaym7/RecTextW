@@ -76,7 +76,20 @@ class _CheckWorker(QThread):
             self.check_result.emit("Directorio de datos", False, str(exc))
             all_ok = False
 
-        # 3. Base de datos
+        # 3. Carpeta temporal del sistema (%TEMP%)
+        try:
+            import tempfile
+            from pathlib import Path as _Path
+            tmp = _Path(tempfile.gettempdir())
+            test = tmp / ".innotech_write_test"
+            test.write_text("ok", encoding="utf-8")
+            test.unlink()
+            self.check_result.emit("Carpeta temporal", True, str(tmp))
+        except Exception as exc:
+            self.check_result.emit("Carpeta temporal", False, f"Sin escritura en %TEMP%: {exc}")
+            all_ok = False
+
+        # 4. Base de datos
         try:
             from app.config import DB_PATH
             from app.db.database import initialize_database
@@ -126,6 +139,18 @@ class _ResumeWorker(QThread):
             self.check_result.emit("Directorio de datos", ok, str(DATA_DIR) if ok else "Sin permisos de escritura")
         except Exception as exc:
             self.check_result.emit("Directorio de datos", False, str(exc))
+
+        # Carpeta temporal del sistema (%TEMP%)
+        try:
+            import tempfile
+            from pathlib import Path as _Path
+            tmp = _Path(tempfile.gettempdir())
+            test = tmp / ".innotech_write_test"
+            test.write_text("ok", encoding="utf-8")
+            test.unlink()
+            self.check_result.emit("Carpeta temporal", True, str(tmp))
+        except Exception as exc:
+            self.check_result.emit("Carpeta temporal", False, f"Sin escritura en %TEMP%: {exc}")
 
         # Base de datos
         try:
@@ -209,7 +234,7 @@ class SplashScreen(QWidget):
         checks_layout.setContentsMargins(SPACE_MD, SPACE_MD, SPACE_MD, SPACE_MD)
         checks_layout.setSpacing(8)
 
-        for check_name in ["FFmpeg", "Directorio de datos", "Base de datos", "Whisper medium", "Logger"]:
+        for check_name in ["FFmpeg", "Directorio de datos", "Carpeta temporal", "Base de datos", "Whisper medium", "Logger"]:
             row = QHBoxLayout()
 
             status_lbl = QLabel()

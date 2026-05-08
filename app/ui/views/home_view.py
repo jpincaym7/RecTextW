@@ -5,7 +5,7 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget,
-    QLabel, QPushButton, QTabWidget, QPlainTextEdit,
+    QLabel, QTabWidget, QPlainTextEdit,
     QApplication, QScrollArea,
 )
 
@@ -16,6 +16,7 @@ from app.ui.components.icon_button import IconButton
 from app.ui.components.card_widget import CardWidget
 from app.ui.components.tag_badge import TagBadge
 from app.ui.components.toast_manager import ToastManager
+from app.ui.components.privileges_dialog import PrivilegesDialog
 from app.ui.tokens import (
     COLOR_BG_SURFACE, COLOR_TEXT_PRIMARY, SPACE_MD, SPACE_LG, SPACE_SM,
 )
@@ -225,7 +226,17 @@ class HomeView(QWidget):
     def on_processing_error(self, stage: str, message: str) -> None:
         self._step_progress.mark_step_error(stage, message)
         self._cancel_btn.hide()
-        ToastManager.instance().error(f"Error en etapa '{stage}': {message}")
+
+        _PERM_KEYWORDS = (
+            "permissionerror", "permission denied", "access is denied",
+            "winerror 5", "acceso denegado", "sin permisos",
+            "espacio en disco insuficiente", "no space left",
+        )
+        if any(k in message.lower() for k in _PERM_KEYWORDS):
+            dlg = PrivilegesDialog(message, parent=self)
+            dlg.exec()
+        else:
+            ToastManager.instance().error(f"Error en etapa '{stage}': {message}")
 
     def on_processing_cancelled(self) -> None:
         self._step_progress.reset()

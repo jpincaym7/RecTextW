@@ -1,5 +1,7 @@
 """Orquestador del flujo completo de procesamiento de un video."""
 import json
+import shutil
+import tempfile
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -82,16 +84,41 @@ class Pipeline:
 
     def run(self, video_path: Path, output_dir: Path) -> PipelineResult:
         """Ejecuta el pipeline completo."""
-        temp_wav: Path | None = None
+        self._preflight(output_dir)
+        return self._execute(video_path, output_dir)
+
+    def _preflight(self, output_dir: Path) -> None:
+        """Verifica permisos y espacio libre antes de empezar."""
+        output_dir.mkdir(parents=True, exist_ok=True)
+        test = output_dir / ".write_test"
         try:
-            return self._execute(video_path, output_dir, lambda p: None)
+            test.write_text("ok", encoding="utf-8")
+            test.unlink()
+        except (PermissionError, OSError) as exc:
+            raise PermissionError(
+                f"Sin permisos de escritura en la carpeta de salida: {output_dir}\n{exc}"
+            ) from exc
+
+        free_mb = shutil.disk_usage(output_dir).free / (1024 * 1024)
+        if free_mb < 500:
+            raise OSError(
+                f"Espacio en disco insuficiente: {free_mb:.0f} MB disponibles (mínimo 500 MB)."
+            )
+
+    def _execute(self, video_path: Path, output_dir: Path) -> PipelineResult:
+        # Archivo de audio temporal en %TEMP% del sistema (siempre escribible,
+        # independiente de dónde esté la carpeta de salida del proyecto).
+        import os as _os
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix=".wav", prefix="innotech_audio_")
+        _os.close(tmp_fd)
+        temp_wav = Path(tmp_path)
+
+        try:
+            return self._run_stages(video_path, output_dir, temp_wav)
         finally:
-            if temp_wav and temp_wav.exists():
-                clean_temp_files([temp_wav])
+            clean_temp_files([temp_wav])
 
-    def _execute(self, video_path: Path, output_dir: Path, _unused) -> PipelineResult:
-        temp_wav = output_dir / "_audio_temp.wav"
-
+    def _run_stages(self, video_path: Path, output_dir: Path, temp_wav: Path) -> PipelineResult:
         # ── Etapa 1: Metadatos ────────────────────────────────────────────
         self._progress("metadata", 0.5, "Analizando metadatos del video...")
         if self._cancel_flag.is_set():
@@ -191,8 +218,6 @@ class Pipeline:
         )
         record_id = self._repository.insert(record)
         self._complete("save")
-
-        clean_temp_files([temp_wav])
 
         return PipelineResult(
             record_id=record_id,

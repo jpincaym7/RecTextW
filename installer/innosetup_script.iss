@@ -17,6 +17,9 @@ MinVersion=10.0
 WizardStyle=modern
 DisableProgramGroupPage=yes
 UninstallDisplayIcon={app}\InnoTech VideoTutor.exe
+; Solicitar privilegios de administrador via UAC (necesario para instalar en Program Files)
+PrivilegesRequired=admin
+PrivilegesRequiredOverridesAllowed=commandline
 
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"

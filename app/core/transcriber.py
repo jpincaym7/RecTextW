@@ -1,4 +1,6 @@
 """Transcripción local con Whisper medium. Import lazy para arranque rápido."""
+import threading
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -9,12 +11,10 @@ from app.utils.whisper_check import is_model_available
 
 logger = get_logger()
 
-# Parámetros validados para español técnico
-WHISPER_TRANSCRIBE_PARAMS = {
+# Parámetros base para español técnico — beam_size se ajusta según device en runtime
+_WHISPER_BASE_PARAMS = {
     "language": "es",
     "task": "transcribe",
-    "beam_size": 5,
-    "best_of": 5,
     "temperature": 0.0,
     "compression_ratio_threshold": 2.4,
     "logprob_threshold": -1.0,
@@ -28,6 +28,11 @@ WHISPER_TRANSCRIBE_PARAMS = {
         "empresarial. Se explican funcionalidades, opciones de menú y procedimientos."
     ),
 }
+
+# CPU: decodificación greedy (beam_size=1) — 3-5× más rápido que beam_size=5
+_PARAMS_CPU = {**_WHISPER_BASE_PARAMS, "beam_size": 1, "best_of": 1}
+# GPU: beam search completo para máxima calidad
+_PARAMS_GPU = {**_WHISPER_BASE_PARAMS, "beam_size": 5, "best_of": 5, "fp16": True}
 
 
 class ModelNotFoundError(Exception):
@@ -103,6 +108,7 @@ class Transcriber:
     def __init__(self) -> None:
         self._model = None
         self._model_loaded: bool = False
+        self._device: str = "cpu"
 
     def is_model_available(self) -> bool:
         """Verifica si el modelo medium está descargado localmente."""
@@ -127,23 +133,19 @@ class Transcriber:
         import torch
         import whisper
 
-        device = "cpu"
-        fp16 = False
         if torch.cuda.is_available():
-            device = "cuda"
-            fp16 = True
+            self._device = "cuda"
             logger.info("CUDA disponible — usando GPU para Whisper")
         else:
+            self._device = "cpu"
             logger.info("CUDA no disponible — usando CPU para Whisper")
 
-        WHISPER_TRANSCRIBE_PARAMS["fp16"] = fp16
-
-        self._model = whisper.load_model(WHISPER_MODEL, device=device)
+        self._model = whisper.load_model(WHISPER_MODEL, device=self._device)
         self._model_loaded = True
-        logger.info("Modelo Whisper '%s' cargado en %s", WHISPER_MODEL, device)
+        logger.info("Modelo Whisper '%s' cargado en %s", WHISPER_MODEL, self._device)
 
         if progress_callback:
-            progress_callback(1.0, "Modelo cargado")
+            progress_callback(1.0, f"Modelo cargado en {self._device.upper()}")
 
     def transcribe(
         self,
@@ -154,11 +156,38 @@ class Transcriber:
         if not self._model_loaded or self._model is None:
             raise TranscriptionError("El modelo no está cargado. Llame a load_model() primero.")
 
-        if progress_callback:
-            progress_callback(0.1, "Iniciando transcripción...")
+        on_gpu = self._device == "cuda"
+        params = _PARAMS_GPU if on_gpu else _PARAMS_CPU
+        device_label = "GPU" if on_gpu else "CPU (puede tardar varios minutos)"
 
-        logger.info("Iniciando transcripción de: %s", audio_path)
-        result = self._model.transcribe(str(audio_path), **WHISPER_TRANSCRIBE_PARAMS)
+        if progress_callback:
+            progress_callback(0.05, f"Transcribiendo en {device_label}...")
+
+        logger.info("Iniciando transcripción en %s: %s", self._device, audio_path)
+
+        # Lanza un hilo daemon que actualiza el elapsed time cada 3 s mientras
+        # Whisper bloquea — mantiene la UI activa aunque no haya progreso real.
+        _done = threading.Event()
+
+        def _elapsed_reporter() -> None:
+            start = time.monotonic()
+            fraction = 0.1
+            while not _done.wait(timeout=3.0):
+                elapsed = int(time.monotonic() - start)
+                mins, secs = divmod(elapsed, 60)
+                label = f"{mins}m {secs}s" if mins else f"{secs}s"
+                if progress_callback:
+                    progress_callback(fraction, f"Transcribiendo en {device_label}... ({label})")
+                fraction = min(fraction + 0.02, 0.85)
+
+        reporter = threading.Thread(target=_elapsed_reporter, daemon=True)
+        reporter.start()
+
+        try:
+            result = self._model.transcribe(str(audio_path), **params)
+        finally:
+            _done.set()
+            reporter.join(timeout=1.0)
 
         if progress_callback:
             progress_callback(0.9, "Procesando resultado...")
